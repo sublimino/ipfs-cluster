@@ -15,6 +15,16 @@ problematic_test = TestClustersReplicationRealloc
 
 export PATH := $(deptools):$(PATH)
 
+# --- controlplaneio dev ---
+NAME := ipfs-cluster-test
+REGISTRY := docker.io/controlplane
+GIT_TAG ?= $(shell bash -c 'TAG=$$(git tag | tail -n1); echo "$${TAG:-none}"')
+
+CONTAINER_TAG ?= $(GIT_TAG)
+CONTAINER_NAME := $(REGISTRY)/$(NAME):$(CONTAINER_TAG)
+CONTAINER_NAME_LATEST := $(REGISTRY)/$(NAME):latest
+# --- end controlplaneio dev ---
+
 all: service ctl
 clean: rwundo clean_sharness
 	$(MAKE) -C ipfs-cluster-service clean
@@ -106,5 +116,25 @@ docker:
 	docker exec tmp-make-cluster-test sh -c "ipfs-cluster-ctl version"
 	docker exec tmp-make-cluster-test sh -c "ipfs-cluster-service -v"
 	docker kill tmp-make-cluster-test
+
+.PHONY: docker-build-test
+docker-build-test: ## builds a docker image
+	@echo "+ $@"
+	docker build -f Dockerfile-test --tag "${CONTAINER_NAME}" .
+	docker tag "${CONTAINER_NAME}" "${CONTAINER_NAME_LATEST}"
+	@echo "Successfully tagged ${CONTAINER_NAME} as ${CONTAINER_NAME_LATEST}"
+
+.PHONY: docker-push-test
+docker-push-test: ## runs the last build docker image
+	@echo "+ $@"
+	docker push "${CONTAINER_NAME}"
+	docker push "${CONTAINER_NAME_LATEST}"
+
+.PHONY: help
+help: ## parse jobs and descriptions from this Makefile
+	@grep -E '^[ a-zA-Z0-9_-]+:([^=]|$$)' $(MAKEFILE_LIST) \
+    | grep -Ev '^help\b[[:space:]]*:' \
+    | sort \
+    | awk 'BEGIN {FS = ":.*?##"}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: all gx deps test test_sharness clean_sharness rw rwundo publish service ctl install clean gx-clean docker
