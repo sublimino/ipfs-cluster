@@ -13,6 +13,7 @@ pipeline {
         docker {
           image 'docker.io/controlplane/gcloud-sdk:latest'
           args '-v /var/run/docker.sock:/var/run/docker.sock ' +
+              '-v go-build:/root/.cache/go-build ' +
               '--user=root ' +
               '--cap-drop=ALL ' +
               '--cap-add=DAC_OVERRIDE'
@@ -105,17 +106,17 @@ pipeline {
         ansiColor('xterm') {
           sh """#!/bin/bash
 
-            set -euxo pipefail  
-            
+            set -euxo pipefail
+
             trap 'rm -rf ~/.ssh/id_rsa /tmp/admin.conf' EXIT
-            
+
             mkdir -p ~/.ssh
             echo '$SSH_CREDENTIALS' | base64 -d > ~/.ssh/id_rsa
             chmod 600 ~/.ssh/id_rsa
-      
+
             ssh-keyscan \${K8S_MASTER_HOST} >> ~/.ssh/known_hosts
             scp root@\${K8S_MASTER_HOST}:/etc/kubernetes/admin.conf /tmp/
-            
+
             export KUBECONFIG=/tmp/admin.conf
             sed -E "s,(server: https://)[^:]*(:6443.*),\\1\${K8S_MASTER_HOST}\\2,g" -i \${KUBECONFIG}
 
@@ -124,16 +125,16 @@ pipeline {
             export GOPATH="\$(pwd)/gopath"
             mkdir "\${GOPATH}/src" -p
             cd "\${GOPATH}/src"
-            
+
             rm -rf kubernetes-ipfs || true
             git clone https://github.com/sublimino/kubernetes-ipfs.git
             cd kubernetes-ipfs
 
             ls -lasp
 
-            CID_FILE=\$(mktemp --dry-run) 
+            CID_FILE=\$(mktemp --dry-run)
             echo "\${CID_FILE}"
-            
+
             docker pull controlplane/kubernetes-ipfs:latest
             docker run \
               -d \
@@ -142,28 +143,28 @@ pipeline {
                 sleep infinity
             CID=\$(cat "\${CID_FILE}")
             docker cp \${CID}:/app/src/kubernetes-ipfs/kubernetes-ipfs ./kubernetes-ipfs
-            docker kill \${CID}            
-            
+            docker kill \${CID}
+
             ./kubernetes-ipfs --help || true
-            
-            hr () 
-            { 
+
+            hr ()
+            {
                 printf '=%.0s' \$(seq \$(tput cols));
                 echo
             }
 
             ./init.sh
-            
-            for YML in \$(find tests -type f -name '*.yml' | grep -Ev 'template.yml\$'); do 
+
+            for YML in \$(find tests -type f -name '*.yml' | grep -Ev 'template.yml\$'); do
               hr
-              echo "Starting: \${YML}"; 
+              echo "Starting: \${YML}";
               hr
-              ./kubernetes-ipfs "\${YML}" || exit \$?; 
-              echo; 
+              ./kubernetes-ipfs "\${YML}" || exit \$?;
+              echo;
               hr
-              echo "Ending: \${YML}"; 
-              hr; 
-            done   
+              echo "Ending: \${YML}";
+              hr;
+            done
 
           """
         }
