@@ -99,7 +99,7 @@ pipeline {
       environment {
         DOCKER_REGISTRY_CREDENTIALS = credentials("${ENVIRONMENT}_docker_credentials")
         SSH_CREDENTIALS = credentials("dev-digitalocean_ssh_credentials")
-        K8S_MASTER_HOST = "167.99.195.141"
+        K8S_MASTER_HOST = "ipfs-kube-1.ctlplane.io"
       }
 
       steps {
