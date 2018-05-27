@@ -117,7 +117,7 @@ pipeline {
             ssh-keyscan \${K8S_MASTER_HOST} >> ~/.ssh/known_hosts
             scp root@\${K8S_MASTER_HOST}:/etc/kubernetes/admin.conf /tmp/
 
-            K8S_MASTER_IP=\$(getent hosts "${K8S_MASTER_HOST}" | awk '{print $1}')
+            K8S_MASTER_IP=\$(getent hosts "\${K8S_MASTER_HOST}" | awk '{print \$1}')
 
             export KUBECONFIG=/tmp/admin.conf
             sed -E "s,(server: https://)[^:]*(:6443.*),\\1\${K8S_MASTER_IP}\\2,g" -i \${KUBECONFIG}
