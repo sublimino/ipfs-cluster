@@ -10,6 +10,7 @@ package api
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -31,7 +32,7 @@ var logger = logging.Logger("apitypes")
 // TrackerStatus values
 const (
 	// IPFSStatus should never take this value
-	TrackerStatusBug = iota
+	TrackerStatusBug TrackerStatus = iota
 	// The cluster node is offline or not responding
 	TrackerStatusClusterError
 	// An error occurred pinning
@@ -89,7 +90,7 @@ func TrackerStatusFromString(str string) TrackerStatus {
 
 // IPFSPinStatus values
 const (
-	IPFSPinStatusBug = iota
+	IPFSPinStatusBug IPFSPinStatus = iota
 	IPFSPinStatusError
 	IPFSPinStatusDirect
 	IPFSPinStatusRecursive
@@ -103,10 +104,12 @@ type IPFSPinStatus int
 // IPFSPinStatusFromString parses a string and returns the matching
 // IPFSPinStatus.
 func IPFSPinStatusFromString(t string) IPFSPinStatus {
+	// Since indirect statuses are of the form "indirect through <cid>", use a regexp to match
+	var ind, _ = regexp.MatchString("^indirect", t)
 	// TODO: This is only used in the http_connector to parse
 	// ipfs-daemon-returned values. Maybe it should be extended.
 	switch {
-	case t == "indirect":
+	case ind:
 		return IPFSPinStatusIndirect
 	case t == "direct":
 		return IPFSPinStatusDirect
@@ -120,6 +123,21 @@ func IPFSPinStatusFromString(t string) IPFSPinStatus {
 // IsPinned returns true if the status is Direct or Recursive
 func (ips IPFSPinStatus) IsPinned() bool {
 	return ips == IPFSPinStatusDirect || ips == IPFSPinStatusRecursive
+}
+
+// ToTrackerStatus converts the IPFSPinStatus value to the
+// appropriate TrackerStatus value.
+func (ips IPFSPinStatus) ToTrackerStatus() TrackerStatus {
+	return ipfsPinStatus2TrackerStatusMap[ips]
+}
+
+var ipfsPinStatus2TrackerStatusMap = map[IPFSPinStatus]TrackerStatus{
+	IPFSPinStatusDirect:    TrackerStatusPinned,
+	IPFSPinStatusRecursive: TrackerStatusPinned,
+	IPFSPinStatusIndirect:  TrackerStatusUnpinned,
+	IPFSPinStatusUnpinned:  TrackerStatusUnpinned,
+	IPFSPinStatusBug:       TrackerStatusBug,
+	IPFSPinStatusError:     TrackerStatusClusterError, //TODO(ajl): check suitability
 }
 
 // GlobalPinInfo contains cluster-wide status information about a tracked Cid,

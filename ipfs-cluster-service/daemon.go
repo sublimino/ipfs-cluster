@@ -125,7 +125,7 @@ func createCluster(
 	)
 	checkErr("creating consensus component", err)
 
-	tracker := maptracker.NewMapPinTracker(cfgs.trackerCfg, cfgs.clusterCfg.ID)
+	tracker := maptracker.NewMapPinTracker(cfgs.trackerCfg, host.ID())
 	mon := setupMonitor(c.String("monitor"), host, cfgs.monCfg, cfgs.pubsubmonCfg)
 	informer, alloc := setupAllocation(c.String("alloc"), cfgs.diskInfCfg, cfgs.numpinInfCfg)
 
@@ -198,6 +198,7 @@ Note that this may corrupt the local cluster state.
 `)
 	case 3:
 		out("exiting cluster NOW")
+		locker.tryUnlock()
 		os.Exit(-1)
 	}
 }

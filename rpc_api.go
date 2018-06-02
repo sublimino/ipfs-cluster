@@ -112,7 +112,7 @@ func (rpcapi *RPCAPI) Join(ctx context.Context, in api.MultiaddrSerial, out *str
 // StatusAll runs Cluster.StatusAll().
 func (rpcapi *RPCAPI) StatusAll(ctx context.Context, in struct{}, out *[]api.GlobalPinInfoSerial) error {
 	pinfos, err := rpcapi.c.StatusAll()
-	*out = globalPinInfoSliceToSerial(pinfos)
+	*out = GlobalPinInfoSliceToSerial(pinfos)
 	return err
 }
 
@@ -142,7 +142,7 @@ func (rpcapi *RPCAPI) StatusLocal(ctx context.Context, in api.PinSerial, out *ap
 // SyncAll runs Cluster.SyncAll().
 func (rpcapi *RPCAPI) SyncAll(ctx context.Context, in struct{}, out *[]api.GlobalPinInfoSerial) error {
 	pinfos, err := rpcapi.c.SyncAll()
-	*out = globalPinInfoSliceToSerial(pinfos)
+	*out = GlobalPinInfoSliceToSerial(pinfos)
 	return err
 }
 
@@ -189,13 +189,6 @@ func (rpcapi *RPCAPI) RecoverLocal(ctx context.Context, in api.PinSerial, out *a
 	c := in.ToPin().Cid
 	pinfo, err := rpcapi.c.RecoverLocal(c)
 	*out = pinfo.ToSerial()
-	return err
-}
-
-// StateSync runs Cluster.StateSync().
-func (rpcapi *RPCAPI) StateSync(ctx context.Context, in struct{}, out *[]api.PinInfoSerial) error {
-	pinfos, err := rpcapi.c.StateSync()
-	*out = pinInfoSliceToSerial(pinfos)
 	return err
 }
 

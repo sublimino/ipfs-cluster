@@ -63,9 +63,9 @@ func init() {
 		SetFacilityLogLevel(f, logLevel)
 	}
 
-	// for f := range LoggingFacilitiesExtra {
-	// 	SetFacilityLogLevel(f, logLevel)
-	// }
+	for f := range LoggingFacilitiesExtra {
+		SetFacilityLogLevel(f, logLevel)
+	}
 }
 
 func checkErr(t *testing.T, err error) {
@@ -403,16 +403,11 @@ func TestClustersPin(t *testing.T) {
 		}
 	}
 	delay()
-	delay()
-	delay()
-	delay()
 	fpinned := func(t *testing.T, c *Cluster) {
 		status := c.tracker.StatusAll()
 		for _, v := range status {
 			if v.Status != api.TrackerStatusPinned {
-				t.Errorf("%s should have been pinned but it is %s",
-					v.Cid,
-					v.Status.String())
+				t.Errorf("%s should have been pinned but it is %s", v.Cid, v.Status)
 			}
 		}
 		if l := len(status); l != nPins {
@@ -438,19 +433,10 @@ func TestClustersPin(t *testing.T) {
 
 	}
 	delay()
-	delay()
-	delay()
-	delay()
 	funpinned := func(t *testing.T, c *Cluster) {
 		status := c.tracker.StatusAll()
-		if l := len(status); l != 0 {
-			// workaround for this test failing randomly
-			t.Logf("%d items still around. Will wait more", l)
-			time.Sleep(10 * time.Second)
-			status = c.tracker.StatusAll()
-			if l := len(status); l != 0 {
-				t.Errorf("Nothing should be pinned: %d items still around after waiting 10 secs", l)
-			}
+		for _, v := range status {
+			t.Errorf("%s should have been unpinned but it is %s", v.Cid, v.Status)
 		}
 	}
 	runF(t, clusters, funpinned)
@@ -731,9 +717,13 @@ func TestClustersRecoverLocal(t *testing.T) {
 
 	f := func(t *testing.T, c *Cluster) {
 		info, err := c.RecoverLocal(h)
-		if err == nil {
-			t.Error("expected an error recovering")
+		if err != nil {
+			t.Fatal(err)
 		}
+		// Wait for queue to be processed
+		delay()
+
+		info = c.StatusLocal(h)
 		if info.Status != api.TrackerStatusPinError {
 			t.Errorf("element is %s and not PinError", info.Status)
 		}
@@ -766,12 +756,21 @@ func TestClustersRecover(t *testing.T) {
 	pinDelay()
 
 	j := rand.Intn(nClusters)
-	ginfo, err := clusters[j].Recover(h)
+	_, err := clusters[j].Recover(h)
 	if err != nil {
 		// we always attempt to return a valid response
 		// with errors contained in GlobalPinInfo
 		t.Fatal("did not expect an error")
 	}
+
+	// Wait for queue to be processed
+	delay()
+
+	ginfo, err := clusters[j].Status(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	pinfo, ok := ginfo.PeerMap[clusters[j].host.ID()]
 	if !ok {
 		t.Fatal("should have info for this host")
