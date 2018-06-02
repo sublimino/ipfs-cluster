@@ -63,8 +63,8 @@ main() {
 
 docker_hub_login() {
   docker login \
-    --username "${DOCKER_HUB_USER}" \
-    --password "${DOCKER_HUB_PASSWORD}"
+    --username ${DOCKER_HUB_USER} \
+    --password $(echo "${DOCKER_HUB_PASSWORD}")
 }
 
 docker_build() {
