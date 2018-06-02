@@ -86,6 +86,14 @@ test_sharness: $(sharness)
 test_problem: deps
 	go test -timeout 20m -loglevel "DEBUG" -v -run $(problematic_test)
 
+test_acceptance: ## run acceptance tests
+	# export this variables from the parent environment
+	./test/test-acceptance.sh \
+		--docker-user "$(DOCKER_REGISTRY_CREDENTIALS_USR)" \
+		--docker-password "$(DOCKER_REGISTRY_CREDENTIALS_PSW)" \
+		--ssh-credentials-base64 "$(SSH_CREDENTIALS)" \
+		--k8s-master-host "$(K8S_MASTER_HOST)"
+
 $(sharness):
 	@echo "Downloading sharness"
 	@wget -q -O sharness/lib/sharness.tar.gz http://github.com/chriscool/sharness/archive/master.tar.gz
@@ -117,24 +125,21 @@ docker:
 	docker exec tmp-make-cluster-test sh -c "ipfs-cluster-service -v"
 	docker kill tmp-make-cluster-test
 
-.PHONY: docker-build-test
-docker-build-test: ## builds a docker image
+docker-build-test-image: ## builds the test docker image
 	@echo "+ $@"
-	docker build -f Dockerfile-test --tag "${CONTAINER_NAME}" .
-	docker tag "${CONTAINER_NAME}" "${CONTAINER_NAME_LATEST}"
-	@echo "Successfully tagged ${CONTAINER_NAME} as ${CONTAINER_NAME_LATEST}"
+	docker build -f Dockerfile-test --tag "$(CONTAINER_NAME)" .
+	docker tag "$(CONTAINER_NAME)" "$(CONTAINER_NAME_LATEST)"
+	@echo "Successfully tagged $(CONTAINER_NAME) as $(CONTAINER_NAME_LATEST)"
 
-.PHONY: docker-push-test
-docker-push-test: ## runs the last build docker image
+docker-push-test-image: ## pushes the test docker image
 	@echo "+ $@"
-	docker push "${CONTAINER_NAME}"
-	docker push "${CONTAINER_NAME_LATEST}"
+	docker push "$(CONTAINER_NAME)"
+	docker push "$(CONTAINER_NAME_LATEST)"
 
-.PHONY: help
 help: ## parse jobs and descriptions from this Makefile
 	@grep -E '^[ a-zA-Z0-9_-]+:([^=]|$$)' $(MAKEFILE_LIST) \
-    | grep -Ev '^help\b[[:space:]]*:' \
-    | sort \
-    | awk 'BEGIN {FS = ":.*?##"}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+		| grep -Ev '^help\b[[:space:]]*:' \
+		| sort \
+		| awk 'BEGIN {FS = ":.*?##"}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: all gx deps test test_sharness clean_sharness rw rwundo publish service ctl install clean gx-clean docker
+.PHONY: all gx deps test test_sharness clean_sharness rw rwundo publish service ctl install clean gx-clean docker docker-build-test docker-push-test help

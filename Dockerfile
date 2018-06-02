@@ -5,9 +5,9 @@ MAINTAINER Hector Sanjuan <hector@protocol.ai>
 
 ENV GOPATH     /go
 ENV SRC_PATH   $GOPATH/src/github.com/ipfs/ipfs-cluster
+WORKDIR $SRC_PATH
 
 COPY . $SRC_PATH
-WORKDIR $SRC_PATH
 RUN make install
 
 ENV SUEXEC_VERSION v0.2
@@ -29,8 +29,8 @@ MAINTAINER Hector Sanjuan <hector@protocol.ai>
 # This is the container which just puts the previously
 # built binaries on the go-ipfs-container.
 
-ENV GOPATH     /go
-ENV SRC_PATH   /go/src/github.com/ipfs/ipfs-cluster
+ENV GOPATH            /go
+ENV SRC_PATH          /go/src/github.com/ipfs/ipfs-cluster
 ENV IPFS_CLUSTER_PATH /data/ipfs-cluster
 
 EXPOSE 9094
