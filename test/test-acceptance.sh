@@ -97,6 +97,7 @@ fetch_kubeconfig_from_k8s_master() {
     | base64 -d >> "${TMP_SSH_KEYFILE}"
   chmod 600 "${TMP_SSH_KEYFILE}"
 
+  mkdir -p ~/.ssh/ || true
   ssh-keyscan ${K8S_MASTER_HOST} >>~/.ssh/known_hosts
   scp root@${K8S_MASTER_HOST}:/etc/kubernetes/admin.conf /tmp/
 
