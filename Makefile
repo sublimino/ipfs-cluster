@@ -1,3 +1,11 @@
+NAME := ipfs-cluster-test
+REGISTRY := docker.io/controlplane
+GIT_TAG ?= $(shell bash -c 'TAG=$$(git tag | tail -n1); echo "$${TAG:-none}"')
+
+CONTAINER_TAG ?= $(GIT_TAG)
+CONTAINER_NAME := $(REGISTRY)/$(NAME):$(CONTAINER_TAG)
+CONTAINER_NAME_LATEST := $(REGISTRY)/$(NAME):latest
+
 gx_version=v0.12.1
 gx-go_version=v1.6.0
 
@@ -14,16 +22,6 @@ sharness = sharness/lib/sharness
 problematic_test = TestClustersReplicationRealloc
 
 export PATH := $(deptools):$(PATH)
-
-# --- controlplaneio dev ---
-NAME := ipfs-cluster-test
-REGISTRY := docker.io/controlplane
-GIT_TAG ?= $(shell bash -c 'TAG=$$(git tag | tail -n1); echo "$${TAG:-none}"')
-
-CONTAINER_TAG ?= $(GIT_TAG)
-CONTAINER_NAME := $(REGISTRY)/$(NAME):$(CONTAINER_TAG)
-CONTAINER_NAME_LATEST := $(REGISTRY)/$(NAME):latest
-# --- end controlplaneio dev ---
 
 all: service ctl
 clean: rwundo clean_sharness
@@ -87,6 +85,7 @@ test_problem: deps
 	go test -timeout 20m -loglevel "DEBUG" -v -run $(problematic_test)
 
 test_acceptance: ## run acceptance tests
+	@echo "+ $@"
 	./test/test-acceptance.sh --debug
 
 $(sharness):
