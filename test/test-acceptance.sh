@@ -99,7 +99,8 @@ fetch_kubeconfig_from_k8s_master() {
 
   mkdir -p ~/.ssh/ || true
   ssh-keyscan ${K8S_MASTER_HOST} >>~/.ssh/known_hosts
-  scp root@${K8S_MASTER_HOST}:/etc/kubernetes/admin.conf /tmp/
+  scp -i "${TMP_SSH_KEYFILE}" \
+    root@${K8S_MASTER_HOST}:/etc/kubernetes/admin.conf /tmp/
 
   K8S_MASTER_IP=$(getent hosts "${K8S_MASTER_HOST}" | awk '{print $1}')
 
