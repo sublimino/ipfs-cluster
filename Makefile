@@ -92,7 +92,8 @@ test_acceptance: ## run acceptance tests
 		--docker-user "$(DOCKER_REGISTRY_CREDENTIALS_USR)" \
 		--docker-password "$(DOCKER_REGISTRY_CREDENTIALS_PSW)" \
 		--ssh-credentials-base64 "$(SSH_CREDENTIALS)" \
-		--k8s-master-host "$(K8S_MASTER_HOST)"
+		--k8s-master-host "$(K8S_MASTER_HOST)" \
+		--debug
 
 $(sharness):
 	@echo "Downloading sharness"
