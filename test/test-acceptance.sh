@@ -110,10 +110,6 @@ fetch_kubeconfig_from_k8s_master() {
   kubectl get nodes
 }
 
-k8s_init() {
-  ./init.sh
-}
-
 setup_temp_dir() {
   TEMP_DIR=$(mktemp -d)
   cd "${TEMP_DIR}"
@@ -145,12 +141,18 @@ get_tests_from_docker_image() {
   ./kubernetes-ipfs --help || true
 }
 
+k8s_init() {
+  ./init.sh
+}
+
 run_yaml_tests() {
   for YML in $(find tests -type f -name '*.yml' | grep -Ev 'template.yml$'); do
     hr
     echo "Starting test: ${YML}"
     hr
+
     ./kubernetes-ipfs "${YML}" || exit $?
+
     echo
     hr
     echo "Ending test: ${YML}"
@@ -173,11 +175,6 @@ parse_arguments() {
         DEBUG=1
         set -xe
         ;;
-      -d | --description)
-        shift
-        not_empty_or_usage "${1:-}"
-        DESCRIPTION="${1}"
-        ;;
       --docker-user)
         shift
         not_empty_or_usage "${1:-}"
@@ -198,14 +195,6 @@ parse_arguments() {
         not_empty_or_usage "${1:-}"
         K8S_MASTER_HOST="${1}"
         ;;
-      -t | --type)
-        shift
-        not_empty_or_usage "${1:-}"
-        case $1 in
-          bash) FILETYPE=bash ;;
-          *) usage "Template type '${1}' not recognised" ;;
-        esac
-        ;;
       --)
         shift
         break
@@ -218,18 +207,14 @@ parse_arguments() {
 }
 
 validate_arguments() {
-  [[ "${EXPECTED_NUM_ARGUMENTS}" -gt 0 && -z "${FILETYPE:-}" ]] && usage "Filetype required"
-
   check_number_of_expected_arguments
-
-  [[ "${#ARGUMENTS[@]}" -gt 0 ]] && FILENAME="${ARGUMENTS[0]}" || true
 
   [[ -n "${DOCKER_HUB_USER:-}" ]] || error "--docker-user required"
   [[ -n "${DOCKER_HUB_PASSWORD:-}" ]] || error "--docker-password required"
+
   [[ -n "${SSH_CREDENTIALS_BASE64:-}" ]] || error "--ssh-credentials-base64 required"
 
-  [[ -n "${K8S_MASTER_HOST:-}" ]] || error "--ssh-credentials-base64 required"
-
+  [[ -n "${K8S_MASTER_HOST:-}" ]] || error "--k8s-master-host required"
 }
 
 # helper functions
