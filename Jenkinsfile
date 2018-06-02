@@ -37,10 +37,11 @@ pipeline {
 
             set -euxo pipefail
 
-            export DOCKER_REGISTRY_CREDENTIALS_USR \
-              DOCKER_REGISTRY_CREDENTIALS_PSW \
-              SSH_CREDENTIALS \
-              K8S_MASTER_HOST
+            export DOCKER_HUB_USER="${DOCKER_REGISTRY_CREDENTIALS_USR}"
+            export DOCKER_HUB_USER="${DOCKER_REGISTRY_CREDENTIALS_PSW}"
+            export SSH_CREDENTIALS_BASE64="${SSH_CREDENTIALS}"
+
+            export K8S_MASTER_HOST
 
             make test_acceptance
           """

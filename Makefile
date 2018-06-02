@@ -87,13 +87,7 @@ test_problem: deps
 	go test -timeout 20m -loglevel "DEBUG" -v -run $(problematic_test)
 
 test_acceptance: ## run acceptance tests
-	# export this variables from the parent environment
-	./test/test-acceptance.sh \
-		--docker-user '$(DOCKER_REGISTRY_CREDENTIALS_USR)' \
-		--docker-password '$(DOCKER_REGISTRY_CREDENTIALS_PSW)' \
-		--ssh-credentials-base64 '$(SSH_CREDENTIALS)' \
-		--k8s-master-host '$(K8S_MASTER_HOST)' \
-		--debug
+	./test/test-acceptance.sh --debug
 
 $(sharness):
 	@echo "Downloading sharness"
